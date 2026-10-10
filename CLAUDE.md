@@ -101,6 +101,31 @@ Titles and summaries come from the data itself, mostly the warning's own
 "* At …" narrative or "* WHAT…" line. Don't add adjectives the data doesn't
 support.
 
+## Satellite (`src/sources/satellite.js`)
+
+All imagery comes from the NOAA/NESDIS STAR CDN (`cdn.star.nesdis.noaa.gov`).
+It sends `Access-Control-Allow-Origin: *` with no Referer checks, and is
+hotlinked from the browser. STAR supports it on weekdays only. At high
+traffic, consider proxying through Cloudflare.
+
+- **Views**:
+  - CONUS East/West: 8 bands × 24 frames
+  - 20 regional sectors: GeoColor frames; other bands as `latest` plus STAR's
+    MP4/GIF loops
+  - Full disk: GeoColor and band 13, 12 frames each
+  - Mesoscale sectors: 7 bands × 24 frames
+- **Frame times come from one index per scan.** All bands and sectors cut
+  from the same ABI scan share timestamps. Only the tail of a sector GeoColor
+  directory listing is parsed: the listings hold ~10 days and run 1–3 MB.
+  Slow listings get one hedged retry.
+- **Meso centers are exact.** They're read from the newest AWS Level-2
+  band-13 meso file header (`geospatial_lat_center`/`lon_center`, the first
+  96 KB). STAR's directory name ("28N-86W") is only the fallback. When both
+  sectors are stacked (30-s imaging), one carries `coLocatedWith` and no
+  bands.
+- An uncached build takes ~1.2–1.5 s and ~26 subrequests, and is edge-cached
+  3 min. The JSON is ~380 KB raw, ~23 KB gzipped.
+
 ## Cameras (`src/sources/cams.js`)
 
 The cams module covers 18 sources, about 17.6k cameras. Most feeds are
@@ -150,21 +175,34 @@ without notice**. `scripts/check-cams.mjs` checks them against live data.
   is `markdown.js` output for model text. It escapes everything and only
   allows `http(s)` links. Its line loop must always consume a line, because it
   runs on half-streamed text.
+- **Native `Element.append()` prints `null` as the text "null".** When
+  children are conditional, use `put(parent, …)` or `el()`, which both skip
+  empties.
 - **Tier colors** are one scale everywhere: `--t3 --t2 --t1 --t0`
   (`.tier-N` sets `--tier`). Warning colors follow the radar-app convention:
   TOR red, SVR yellow, FFW green, EWW magenta.
 - **Map (`map.js`)**:
-  - The basemap is NASA GIBS (VIIRS Black Marble or Blue Marble relief) plus
-    GIBS `Reference_Labels_15m`, with Natural Earth lines drawn as vectors from
-    `/api/basemap`. **CARTO basemaps now need an API key** (keyless tiles
-    carry an "API KEY REQUIRED" watermark), so don't switch back.
+  - The basemap is NASA GIBS (VIIRS Black Marble or Blue Marble relief).
+    Natural Earth lines are drawn as vectors from `/api/basemap`, and city
+    labels come from `/api/places`, thinned by population and checked for
+    collisions.
+  - **Don't add GIBS `Reference_Labels_15m`**: at these zooms its tiles are
+    opaque black placeholders that blank the whole map.
+  - **Don't switch back to CARTO basemaps**: they now need an API key, and
+    keyless tiles carry an "API KEY REQUIRED" watermark.
   - Radar is IEM `nexrad-n0q-900913` with `-mNNm` offsets for the loop. GOES
     layers: GIBS `GOES-East_ABI_GeoColor` and IEM `goes-east-ir-4km-900913`.
   - All vector layers come from `/api/stories` `map`; hurricanes come from
     `/api/tropical`.
 - **Hero (`hero.js`)**: a GOES-East CONUS loop with story pins projected
   through the ABI fixed grid (`goes.js`, constants from `/api/satellite`
-  `projection`).
+  `projection`). Under it, thumbnails show where the mesoscale sectors are
+  aimed.
+  - The projection's `satLon` is the **grid origin** (−75.0 for GOES-19,
+    −137.0 for GOES-18), not the satellite's actual 75.2°W; using 75.2 puts
+    pins 2–5 px off.
+  - STAR images carry a caption bar over the bottom ~25 px, so pins there are
+    hidden.
 - **Chat (`chat.js`)**: weatherchat's SSE protocol (`delta`/`reset`/`tools`/
   `tool`/`done`/`error`, 75 s stall watchdog). When the model calls
   `get_cams_near`, the client fetches the same cameras and shows them under

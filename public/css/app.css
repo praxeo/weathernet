@@ -318,7 +318,8 @@ main { display: block; }
 .learn-card { text-align: left; padding: 13px 14px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); cursor: pointer; display: grid; gap: 4px; }
 .learn-card:hover { border-color: rgba(154, 140, 255, .55); }
 .learn-card b { font-size: 14.5px; }
-.learn-card span { font-size: 12.5px; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.learn-card span { font-size: 12.5px; line-height: 1.45; max-height: 2.9em; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.learn-card .ico { max-height: none; line-height: 1.2; }
 .learn-card .ico { font-size: 18px; }
 
 /* ── Modal / drawer ──────────────────────────────────────────────────────── */
@@ -438,8 +439,9 @@ footer b { color: var(--text-2); }
 .loc-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 
 /* Hero: where the 1-minute mesoscale sectors are aimed. */
-.meso-strip { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; padding: 12px; border-top: 1px solid var(--border); background: rgba(4, 6, 11, .9); }
-.meso-strip h4 { grid-column: 1 / -1; margin: 0; font: 700 10.5px/1 var(--font); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.meso-strip { padding: 12px; border-top: 1px solid var(--border); background: rgba(4, 6, 11, .9); }
+.meso-strip h4 { margin: 0 0 10px; font: 700 10.5px/1 var(--font); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.meso-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 .meso-card { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: #000; cursor: pointer; aspect-ratio: 1 / 1; text-align: left; padding: 0; }
 .meso-card img { width: 100%; height: 100%; object-fit: cover; }
 .meso-card span { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 8px 6px; font-size: 11.5px; line-height: 1.25; background: linear-gradient(transparent, rgba(0, 0, 0, .85)); }
@@ -456,4 +458,16 @@ footer b { color: var(--text-2); }
   .story.lead > .media { grid-column: 2; grid-row: 1 / span 8; align-self: start; aspect-ratio: 4 / 3; }
   .story.lead h3 { font-size: 22px; }
   .story.lead .summary { -webkit-line-clamp: 6; }
+}
+
+.badge.sky { background: #5cc8ff; color: #04121c; border-color: transparent; letter-spacing: .06em; }
+
+/* Phones: keep the hero short — band chips and meso cards scroll sideways,
+   the band caption clamps to three lines. */
+@media (max-width: 640px) {
+  .hero .channel-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .hero .channel-chips::-webkit-scrollbar { display: none; }
+  /* Clamped text overflows into padding, so the bottom gap is a border. */
+  .sat-caption { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; padding-bottom: 0; border-bottom: 14px solid rgba(4, 6, 11, .9); }
+  .meso-row { grid-auto-flow: column; grid-auto-columns: 44%; grid-template-columns: none; overflow-x: auto; scrollbar-width: none; }
 }

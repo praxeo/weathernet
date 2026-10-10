@@ -25,7 +25,7 @@ export function camTile(c, onClick) {
     : el("div", { class: "broken", text: "▶ Live video" });
   const tile = el("div", { class: "cam", title: c.name, tabindex: 0, on: { click: onClick, keydown: (e) => { if (e.key === "Enter") onClick(); } } },
     img,
-    el("div", { class: "tag" }, c.hls ? el("span", { class: "badge live", text: "LIVE" }) : null, c.kind === "sky" || c.kind === "fire" ? el("span", { class: "badge", text: c.kind === "fire" ? "FIRE CAM" : "SKY CAM" }) : null),
+    el("div", { class: "tag" }, c.hls ? el("span", { class: "badge live", text: "LIVE" }) : null, c.kind === "sky" || c.kind === "fire" ? el("span", { class: "badge sky", text: c.kind === "fire" ? "FIRE CAM" : "SKY CAM" }) : null),
     el("div", { class: "label" },
       el("b", { text: c.name }),
       el("span", { class: "muted", text: [c.city && c.state ? `${c.city}, ${c.state}` : c.state, c.distMi != null ? `${Math.round(c.distMi)} mi ${c.bearing || ""}`.trim() : null].filter(Boolean).join(" · ") }),
@@ -168,15 +168,21 @@ export async function renderCams() {
   refreshTimer = setInterval(refreshStills, 60000);
 }
 
+// Station channels post sports and news too; keep their uploads only when
+// the title is about weather. Chasers, networks and agencies pass as-is.
+const WX_WORDS = /weather|storm|hurricane|tropical|tornado|severe|rain|flood|wind|gust|surge|landfall|radar|forecast|first alert|tracking|snow|ice|freeze|heat|cold|fire|smoke|lightning|hail|isaias|cam\b|skycam|alert|warning|watch|outage/i;
+
 function mergeLive(a, b) {
   const x = a || {};
   const y = b || {};
+  const kinds = new Map([...(x.channels || []), ...(y.channels || [])].map((c) => [c.id, c.kind]));
+  const weatherish = (v) => kinds.get(v.channelId) !== "station" || WX_WORDS.test(v.title || "");
   const byTime = (k) => (p, q) => String(q[k] || "").localeCompare(String(p[k] || ""));
   return {
     configured: !!(x.configured || y.configured),
     live: [...(x.live || []), ...(y.live || [])].sort((p, q) => (q.viewers || 0) - (p.viewers || 0)),
     upcoming: [...(x.upcoming || []), ...(y.upcoming || [])],
-    recent: [...(x.recent || []), ...(y.recent || [])].filter((v) => !v.short).sort(byTime("published")).slice(0, 24),
+    recent: [...(x.recent || []), ...(y.recent || [])].filter((v) => !v.short && weatherish(v)).sort(byTime("published")).slice(0, 24),
     channels: [...(x.channels || []), ...(y.channels || [])],
   };
 }

@@ -129,8 +129,16 @@ function drawPlaces() {
   layers.places.clearLayers();
   const z = map.getZoom();
   const floor = z <= 4 ? 1500000 : z === 5 ? 600000 : z === 6 ? 200000 : z === 7 ? 60000 : 0;
+  // Largest first, skipping any label that would overlap one already
+  // placed (world-pixel boxes at this zoom, so panning doesn't matter).
+  const boxes = [];
   for (const [name, st, lat, lon, pop] of places) {
-    if (pop < floor) break; // largest first
+    if (pop < floor) break;
+    const p = map.project([lat, lon], z);
+    const w = name.length * 6.6 + 8;
+    const box = [p.x - w / 2, p.y - 9, p.x + w / 2, p.y + 9];
+    if (boxes.some((o) => box[0] < o[2] && box[2] > o[0] && box[1] < o[3] && box[3] > o[1])) continue;
+    boxes.push(box);
     L.marker([lat, lon], {
       pane: "labels", interactive: false, keyboard: false,
       icon: L.divIcon({ className: "place-label", html: `<span>${escapeHtml(name)}</span>`, iconSize: [0, 0] }),

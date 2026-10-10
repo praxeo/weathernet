@@ -62,11 +62,13 @@ function renderMesoStrip(catalog) {
   box.hidden = !meso.length;
   if (!meso.length) return;
   box.append(el("h4", { text: "Where NOAA's 1-minute imagery is aimed" }));
+  const row = el("div", { class: "meso-row" });
+  box.append(row);
   for (const m of meso.slice(0, 4)) {
     const b = m.bands.find((x) => x.id === "GEOCOLOR") || m.bands[0];
     const src = b.latest || b.frames?.[b.frames.length - 1]?.url;
     if (!src) continue;
-    box.append(el("button", {
+    row.append(el("button", {
       class: "meso-card",
       title: `${m.sat === "west" ? "GOES-West" : "GOES-East"} ${m.id}`,
       on: { click: () => { store.set("wn.satView", `meso-${m.sat}-${m.id}`); document.getElementById("satellite").scrollIntoView({ behavior: "smooth" }); window.dispatchEvent(new CustomEvent("wn:satview")); } },
