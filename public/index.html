@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WeatherNet — the atmosphere, live</title>
+<meta name="description" content="Nationwide live weather for enthusiasts: GOES satellite loops, radar, warnings, cameras that follow the weather, weather history, explainers and an AI meteorologist.">
+<meta name="theme-color" content="#04060b">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#now" aria-label="WeatherNet home">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="wnLogo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5cc8ff"/><stop offset="1" stop-color="#7b6bff"/></linearGradient></defs><circle cx="16" cy="16" r="10" fill="url(#wnLogo)"/><path d="M8.5 13.5c3-1.8 6.4-1.6 9.4.4s6 2.1 7.6.9" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.5" stroke-linecap="round"/><path d="M7.8 18.2c2.7 1.4 5.6 1.3 8.4-.4 2.6-1.6 5.5-1.8 8-.6" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width="1.5" stroke-linecap="round"/><ellipse cx="16" cy="16" rx="15" ry="6" transform="rotate(-24 16 16)" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="1.1"/><circle cx="28" cy="8.4" r="1.9" fill="#fff"/></svg>
+    <span>WeatherNet<small>The atmosphere, live</small></span>
+  </a>
+  <nav class="nav" aria-label="Sections">
+    <a href="#now">Now</a>
+    <a href="#stories">Stories</a>
+    <a href="#map">Map</a>
+    <a href="#satellite">Satellite</a>
+    <a href="#cams">Cams</a>
+    <a href="#local">Your weather</a>
+    <a href="#history">History</a>
+    <a href="#learn">Learn</a>
+  </nav>
+  <div class="topbar-right">
+    <span class="pill-level lvl-quiet" id="levelPill" title="National weather status"><span class="dot"></span><span id="levelText">Loading</span></span>
+    <span class="clock" id="clock"></span>
+    <button class="btn small loc-btn" id="locBtn" title="Change your location">📍 <span id="locName">Your location</span></button>
+  </div>
+</header>
+
+<main>
+  <section id="now" class="hero" aria-label="Right now">
+    <div class="hero-media">
+      <div class="sat-stage" id="heroStage">
+        <img id="heroA" alt="Latest GOES-East satellite image of the contiguous United States">
+        <img id="heroB" class="back" alt="">
+        <svg class="pins" id="heroPins" aria-label="Story locations"></svg>
+        <div class="sat-credit" id="heroCredit">GOES-East · NOAA</div>
+      </div>
+      <div class="scrub"><span id="heroScrub"></span></div>
+      <div class="sat-bar">
+        <div id="heroBands" class="channel-chips"></div>
+        <button class="chip" id="heroPlay" aria-pressed="true">❚❚ Pause</button>
+        <span class="time" id="heroTime">—</span>
+      </div>
+      <div class="sat-caption" id="heroCaption"></div>
+      <div class="meso-strip" id="heroMeso" hidden></div>
+    </div>
+    <div class="hero-copy" id="heroCopy">
+      <div class="status"><span class="kicker">Across the US right now</span></div>
+      <div class="skeleton" style="height:22px;width:40%"></div>
+      <div class="skeleton" style="height:84px"></div>
+      <div class="skeleton" style="height:96px"></div>
+    </div>
+  </section>
+
+  <section id="stories" class="section" aria-labelledby="storiesH">
+    <div class="section-head">
+      <div>
+        <div class="kicker">01 · The story board</div>
+        <h2 id="storiesH">What's happening</h2>
+        <p class="dek">Ranked live from NWS warnings and their impact tags, SPC outlooks and watches, NHC advisories, storm reports and record reports. Things elsewhere in the world only show up when they're truly extraordinary.</p>
+      </div>
+      <span class="muted mono" id="storiesUpdated"></span>
+    </div>
+    <div id="storyBoard"><div class="stories-grid"><div class="skeleton" style="height:240px"></div><div class="skeleton" style="height:240px"></div><div class="skeleton" style="height:240px"></div></div></div>
+  </section>
+
+  <section id="map" class="section" aria-labelledby="mapH">
+    <div class="section-head">
+      <div>
+        <div class="kicker">02 · Live map</div>
+        <h2 id="mapH">Radar, warnings &amp; reports</h2>
+        <p class="dek">Base reflectivity from the NEXRAD network (IEM composite, 5-minute steps), NWS storm-based warning polygons, SPC watches and Day 1 risk areas, Local Storm Reports and cameras.</p>
+      </div>
+    </div>
+    <div class="map-wrap" id="mapWrap">
+      <div id="leaflet"></div>
+    </div>
+  </section>
+
+  <section id="satellite" class="section" aria-labelledby="satH">
+    <div class="section-head">
+      <div>
+        <div class="kicker">03 · From orbit</div>
+        <h2 id="satH">Satellite</h2>
+        <p class="dek">GOES-East and GOES-West imagery from NOAA. The two mesoscale sectors on each satellite scan every minute and get aimed at the most important weather in the hemisphere, so watching them shows you what forecasters are watching.</p>
+      </div>
+    </div>
+    <div id="satGallery" class="sat-gallery"><div class="skeleton" style="height:420px;grid-column:1/-1"></div></div>
+  </section>
+
+  <section id="cams" class="section" aria-labelledby="camsH">
+    <div class="section-head">
+      <div>
+        <div class="kicker">04 · Eyes on the ground</div>
+        <h2 id="camsH">Cams on the action</h2>
+        <p class="dek">Traffic and sky cameras nearest the top stories and your location, plus live storm coverage from broadcast meteorologists and chasers.</p>
+      </div>
+    </div>
+    <div id="camBoard"><div class="skeleton" style="height:200px"></div></div>
+  </section>
+
+  <section id="local" class="section" aria-labelledby="localH">
+    <div class="section-head">
+      <div>
+        <div class="kicker">05 · Hyperlocal</div>
+        <h2 id="localH">Your weather</h2>
+        <p class="dek" id="localDek">Observations, an original forecast discussion written from the full NWS/SPC/WPC/NHC data packet for your point, the 7-day and the next 48 hours.</p>
+      </div>
+      <button class="btn small" id="locBtn2">📍 Change location</button>
+    </div>
+    <div id="localBoard"><div class="skeleton" style="height:320px"></div></div>
+  </section>
+
+  <section id="history" class="section" aria-labelledby="histH">
+    <div class="section-head">
+      <div>
+        <div class="kicker">06 · The record books</div>
+        <h2 id="histH">This day in weather</h2>
+        <p class="dek">Records and normals from NOAA's threaded long-term station records (ACIS), and every tornado on this date in the SPC database since 1950.</p>
+      </div>
+    </div>
+    <div id="historyBoard"><div class="skeleton" style="height:260px"></div></div>
+  </section>
+
+  <section id="learn" class="section" aria-labelledby="learnH">
+    <div class="section-head">
+      <div>
+        <div class="kicker">07 · Understand it</div>
+        <h2 id="learnH">Learn</h2>
+        <p class="dek">What the products mean, the thresholds behind them, and what to look for on radar and satellite. Every story links here.</p>
+      </div>
+    </div>
+    <div id="learnBoard"></div>
+  </section>
+</main>
+
+<footer>
+  <div><b>WeatherNet</b> is built on public data: NOAA/NWS (api.weather.gov), SPC, WPC, NHC, NOAA NESDIS STAR (GOES imagery), Iowa Environmental Mesonet (radar composites, storm reports, watches), NOAA RCC-ACIS (climate records), the SPC tornado database, GDACS, and state DOT camera networks. Basemap © OpenStreetMap contributors © CARTO. Place names: Natural Earth.</div>
+  <div>Forecast discussions and chat answers are written by a language model from live data and cite official products; warnings come from the National Weather Service.</div>
+</footer>
+
+<button class="ask-fab" id="askFab" aria-label="Ask WeatherNet">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
+  <span>Ask WeatherNet</span>
+</button>
+
+<aside class="ask" id="ask" aria-label="Ask WeatherNet" aria-hidden="true">
+  <div class="ask-head">
+    <svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><circle cx="16" cy="16" r="10" fill="url(#wnLogo)"/></svg>
+    <div><b>Ask WeatherNet</b><div class="muted" style="font-size:12px">Live NWS, SPC, NHC, radar &amp; cams</div></div>
+    <button class="btn small ghost" id="askClear" title="Start over">New</button>
+    <button class="btn small x" id="askClose" aria-label="Close">✕</button>
+  </div>
+  <div class="ask-log" id="askLog"></div>
+  <div class="ask-suggest" id="askSuggest"></div>
+  <form class="ask-form" id="askForm">
+    <textarea id="askInput" rows="1" placeholder="What's the biggest weather story right now?" aria-label="Your question"></textarea>
+    <button class="btn primary" type="submit" id="askSend">Send</button>
+  </form>
+</aside>
+
+<div class="overlay" id="overlay"></div>
+<section class="sheet" id="sheet" aria-modal="true" role="dialog" aria-hidden="true">
+  <div class="sheet-head"><div id="sheetTitle"></div><button class="btn small x" id="sheetClose" aria-label="Close">✕</button></div>
+  <div class="sheet-body" id="sheetBody"></div>
+</section>
+
+<script src="/vendor/leaflet/leaflet.js"></script>
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>

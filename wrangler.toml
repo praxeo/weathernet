@@ -1,0 +1,44 @@
+name = "weathernet"
+main = "src/index.js"
+compatibility_date = "2026-05-28"
+
+# The front end is plain static files (public/), served by Workers Static
+# Assets without invoking the worker; everything under /api/ runs src/index.js.
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+# Workers Logs: each request's status, wall/CPU time and any exception, so a
+# hang or error can be traced after the fact.
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[vars]
+NWS_USER_AGENT = "WeatherNet/0.1 (contact@example.com)"
+# Inference provider + model (same wiring as weatherchat):
+#   fireworks → GLM 5.3 Fast (Chat Completions, FIREWORKS_API_KEY)
+#   meta      → MODEL = "muse-spark-1.3-contributor" (Responses API, MODEL_API_KEY)
+PROVIDER = "fireworks"
+MODEL = "accounts/fireworks/routers/glm-5p3-fast"
+# "Your weather" home location until the visitor picks one.
+DEFAULT_LAT = "33.21"
+DEFAULT_LON = "-86.65"
+DEFAULT_OFFICE = "BMX"
+DEFAULT_LOCATION_NAME = "Shelby County, Alabama"
+# Local broadcast meteorologists whose X timelines feed "Around you" (only
+# read while weather is active at the point; see CLAUDE.md).
+X_HANDLES = "spann"
+# Optional tuning (see weatherchat): REASONING_EFFORT, SUMMARY_EFFORT,
+# MAX_TOKENS, SUMMARY_MODEL.
+
+# Secrets (wrangler secret put NAME, or the dashboard). All but the provider
+# key are optional; each feature degrades to a "not configured" note.
+#   FIREWORKS_API_KEY   chat + discussions (PROVIDER = "fireworks")
+#   MODEL_API_KEY       chat + discussions (PROVIDER = "meta")
+#   YOUTUBE_API_KEY     live-stream detection for the video wall
+#   WINDY_API_KEY       nationwide scenic webcams (Windy Webcams API, free tier)
+#   X_BEARER_TOKEN      local meteorologists' X posts (pay-per-use)
+#   AIRNOW_API_KEY      air quality
+#   ELEVENLABS_API_KEY  voice input + spoken replies
