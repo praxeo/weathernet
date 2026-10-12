@@ -1,0 +1,1 @@
+{"cell":[34,-114],"years":[1950,2025],"efFrom":"2007-02-01","src":"SPC 1950-2025_all_tornadoes.csv (sg=1 whole tracks)","cols":["date","st","mag","fat","inj","len","wid","slat","slon","elat","elon","county","id"],"rows":[["1979-03-14","AZ",1,0,3,0.5,50,34.7,-113.62,null,null,"Mohave Co.","03-14/48"]]}

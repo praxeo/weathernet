@@ -1,0 +1,1 @@
+{"cell":[45,-73],"years":[1950,2025],"efFrom":"2007-02-01","src":"SPC 1950-2025_all_tornadoes.csv (sg=1 whole tracks)","cols":["date","st","mag","fat","inj","len","wid","slat","slon","elat","elon","county","id"],"rows":[["1957-06-18","VT",2,0,0,3,500,45,-72.87,45.05,-72.82,"Franklin Co.","06-18/24"]]}

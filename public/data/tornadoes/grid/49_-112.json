@@ -1,0 +1,1 @@
+{"cell":[49,-112],"years":[1950,2025],"efFrom":"2007-02-01","src":"SPC 1950-2025_all_tornadoes.csv (sg=1 whole tracks)","cols":["date","st","mag","fat","inj","len","wid","slat","slon","elat","elon","county","id"],"rows":[["1991-06-29","MT",0,0,0,0.2,10,49,-111.67,null,null,"Toole Co.","06-29/157"]]}

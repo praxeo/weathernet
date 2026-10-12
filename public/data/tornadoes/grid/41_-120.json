@@ -1,0 +1,1 @@
+{"cell":[41,-120],"years":[1950,2025],"efFrom":"2007-02-01","src":"SPC 1950-2025_all_tornadoes.csv (sg=1 whole tracks)","cols":["date","st","mag","fat","inj","len","wid","slat","slon","elat","elon","county","id"],"rows":[["1988-02-28","NV",0,0,0,0.2,10,41.4,-119.35,null,null,"Washoe Co.","02-28/14"],["1988-02-28","NV",0,0,0,0.2,10,41.4,-119.35,null,null,"Washoe Co.","02-28/15"]]}

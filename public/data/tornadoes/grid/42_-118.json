@@ -1,0 +1,1 @@
+{"cell":[42,-118],"years":[1950,2025],"efFrom":"2007-02-01","src":"SPC 1950-2025_all_tornadoes.csv (sg=1 whole tracks)","cols":["date","st","mag","fat","inj","len","wid","slat","slon","elat","elon","county","id"],"rows":[["1969-06-23","OR",1,0,0,1,10,42.95,-117.05,null,null,"Wallowa Co.","06-23/68"]]}
