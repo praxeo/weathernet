@@ -1,0 +1,15 @@
+{
+  "name": "weathernet",
+  "private": true,
+  "type": "module",
+  "description": "WeatherNet — the live atmosphere, explained. A Cloudflare Worker + static front end.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "wrangler deploy --dry-run --outdir dist",
+    "local": "NODE_USE_ENV_PROXY=1 node scripts/dev-server.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.40.0"
+  }
+}
