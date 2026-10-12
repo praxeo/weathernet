@@ -16,6 +16,9 @@
 //   cols = ["yr","st","mag","fat","inj","len","wid","slat","slon","elat","elon","county"]
 //   e.g. [2011,"AL",5,72,145,132,2200,34.1043,-88.1479,35.0857,-86.1511,"Marion Co."]
 //
+// Also grid/<lat>_<lon>.json, the same tracks indexed by 1° cell for
+// "tornadoes near a point" (see writeGrid below).
+//
 // mag is the F/EF number (null = unknown; SPC's -9). Rows from year >= efFrom
 // are Enhanced Fujita ratings (EF in service 2007-02-01, so efFrom is 2007 for
 // Feb–Dec days and 2008 for January days). len is miles, wid yards; elat/elon
@@ -32,7 +35,7 @@
 // whole track and segments get different suffixes, so the touchdown segment
 // is matched by date + state + identical start point (older rows also share
 // om, which is the fallback).
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import proc from "node:process";
@@ -119,6 +122,41 @@ function countyNames(text) {
 
 const num = (s) => (s === "" || s == null ? NaN : Number(s));
 const pad2 = (n) => String(n).padStart(2, "0");
+
+// ── Spatial index ────────────────────────────────────────────────────────────
+// grid/<lat>_<lon>.json holds every track whose start–end box touches that 1°
+// cell (SW corner, e.g. 33_-87 covers 33–34°N, 87–86°W), for "tornadoes near
+// a point" (src/sources/archive.js). A track crossing cells is in each; its id
+// ("MM-DD/<row in that day file>") dedupes them.
+const GRID_COLS = ["date", "st", "mag", "fat", "inj", "len", "wid", "slat", "slon", "elat", "elon", "county", "id"];
+
+function addToGrid(grid, row, md, i) {
+  const [yr, st, mag, fat, inj, len, wid, slat, slon, elat, elon, county] = row;
+  const lat2 = elat ?? slat, lon2 = elon ?? slon;
+  const out = [`${yr}-${md}`, st, mag, fat, inj, len, wid, slat, slon, elat, elon, county, `${md}/${i}`];
+  for (let y = Math.floor(Math.min(slat, lat2)); y <= Math.floor(Math.max(slat, lat2)); y++) {
+    for (let x = Math.floor(Math.min(slon, lon2)); x <= Math.floor(Math.max(slon, lon2)); x++) {
+      const k = `${y}_${x}`;
+      if (!grid.has(k)) grid.set(k, []);
+      grid.get(k).push(out);
+    }
+  }
+}
+
+async function writeGrid(grid, dir, { years, src }) {
+  await rm(dir, { recursive: true, force: true });
+  await mkdir(dir, { recursive: true });
+  let bytes = 0, rows = 0;
+  for (const [k, list] of grid) {
+    list.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+    const [y, x] = k.split("_").map(Number);
+    const body = JSON.stringify({ cell: [y, x], years, efFrom: "2007-02-01", src, cols: GRID_COLS, rows: list });
+    await writeFile(path.join(dir, `${k}.json`), body);
+    bytes += Buffer.byteLength(body);
+    rows += list.length;
+  }
+  return { files: grid.size, bytes, rows };
+}
 
 async function main() {
   const csvSrc = arg("--csv") || (await latestCsvUrl());
@@ -217,6 +255,7 @@ async function main() {
   await mkdir(outDir, { recursive: true });
   const src = `SPC ${path.basename(new URL(csvSrc, "file:///").pathname)} (sg=1 whole tracks)`;
   let total = 0, biggest = { md: "", bytes: 0, rows: 0 }, smallest = { md: "", bytes: Infinity, rows: 0 };
+  const grid = new Map(); // "lat_lon" (1° cell, SW corner) → rows
   for (let mo = 1; mo <= 12; mo++) {
     for (let dy = 1; dy <= new Date(Date.UTC(2024, mo, 0)).getUTCDate(); dy++) { // 2024: leap year → 02-29
       const md = `${pad2(mo)}-${pad2(dy)}`;
@@ -227,8 +266,10 @@ async function main() {
       total += bytes;
       if (bytes > biggest.bytes) biggest = { md, bytes, rows: rows.length };
       if (bytes < smallest.bytes) smallest = { md, bytes, rows: rows.length };
+      rows.forEach((row, i) => addToGrid(grid, row, md, i));
     }
   }
+  const gridStats = await writeGrid(grid, path.join(outDir, "grid"), { years: [firstYear, lastYear], src });
 
   const kb = (b) => `${(b / 1024).toFixed(1)} KB`;
   proc.stdout.write(
@@ -240,6 +281,7 @@ async function main() {
         `retired code ${stats.county.retired}, unknown (f1=0) ${stats.county.unknown}, invalid code ${stats.county.invalid} ${JSON.stringify(Object.fromEntries(invalidCodes))}`,
       `wrote 366 files to ${path.relative(ROOT, outDir)}: total ${kb(total)} (${(total / 1048576).toFixed(2)} MB); ` +
         `largest ${biggest.md} ${kb(biggest.bytes)} (${biggest.rows} rows); smallest ${smallest.md} ${kb(smallest.bytes)} (${smallest.rows} rows)`,
+      `grid: ${gridStats.files} 1° cells, ${gridStats.rows} rows (tracks repeat in each cell they cross), ${(gridStats.bytes / 1048576).toFixed(2)} MB`,
       "",
     ].join("\n"),
   );

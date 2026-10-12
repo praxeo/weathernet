@@ -45,7 +45,7 @@ function todayCentral() {
   return fmt.format(new Date());
 }
 
-function parseDate(s) {
+export function parseDate(s) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ""));
   if (!m) return null;
   const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
@@ -54,7 +54,7 @@ function parseDate(s) {
   return { y, iso: m[0], md: `${m[2]}-${m[3]}` };
 }
 
-function addDays(iso, n) {
+export function addDays(iso, n) {
   const t = new Date(iso + "T00:00:00Z");
   t.setUTCDate(t.getUTCDate() + n);
   return t.toISOString().slice(0, 10);
@@ -63,7 +63,7 @@ function addDays(iso, n) {
 // ── ACIS ─────────────────────────────────────────────────────────────────────
 // GET with the JSON in ?params= so the shared fetch helper (deadline, UA, edge
 // cache) applies. ACIS reports bad requests as HTTP 200 + {"error": "..."}.
-async function acis(path, params, { env, ttl = 3600, timeoutMs = 12e3 } = {}) {
+export async function acis(path, params, { env, ttl = 3600, timeoutMs = 12e3 } = {}) {
   const url = ACIS + path + "?params=" + encodeURIComponent(JSON.stringify(params));
   const j = await fetchJSON(url, { env, ttl, timeoutMs });
   if (!j || j.error) throw new Error(`ACIS ${path}: ${(j && j.error) || "empty response"}`);
@@ -73,7 +73,7 @@ async function acis(path, params, { env, ttl = 3600, timeoutMs = 12e3 } = {}) {
 // Daily values arrive as strings: "M" missing, "T" trace, "S" (amount folded
 // into a later accumulation), "1.25A" (a multi-day total). Only true one-day
 // values count toward daily records.
-function acisValue(v, counts) {
+export function acisValue(v, counts) {
   if (typeof v !== "string") return null;
   if (v === "T") return TRACE;
   if (v.endsWith("A")) {
@@ -212,6 +212,16 @@ function pickStation(cands, lat, lon, d, notes) {
   return { ...pick, threadex: false };
 }
 
+// The station climateHistory would use for this point and date (archive.js
+// reads its daily values over other date ranges). null when there is none.
+export async function nearestClimateStation(lat, lon, iso, { env, ctx } = {}) {
+  const d = parseDate(iso);
+  if (!d) throw new Error(`bad date "${iso}"`);
+  const notes = [];
+  const s = pickStation(await stationCandidates(lat, lon, env, ctx), lat, lon, d, notes);
+  return s ? { ...s, notes } : null;
+}
+
 // ── Records, normals, series for one station + date (cached 12 h) ────────────
 const fmtTemp = (v) => String(v);
 const fmtIn = (digits) => (v) => (v === TRACE ? "T" : v.toFixed(digits));
@@ -331,7 +341,7 @@ async function fetchStationHistory(st, d, env) {
 }
 
 // ── Tornadoes on this month-day ──────────────────────────────────────────────
-async function tornadoDay(md, env) {
+export async function tornadoDay(md, env) {
   const assets = env && env.ASSETS;
   if (!assets || typeof assets.fetch !== "function") throw new Error("no ASSETS binding");
   // Static file; keep the parsed copy for the isolate's life (bounded at 6 h).

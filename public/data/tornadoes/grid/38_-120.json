@@ -1,0 +1,1 @@
+{"cell":[38,-120],"years":[1950,2025],"efFrom":"2007-02-01","src":"SPC 1950-2025_all_tornadoes.csv (sg=1 whole tracks)","cols":["date","st","mag","fat","inj","len","wid","slat","slon","elat","elon","county","id"],"rows":[["1989-06-07","NV",0,0,0,1,10,38.98,-119.32,null,null,"Lyon Co.","06-07/273"]]}

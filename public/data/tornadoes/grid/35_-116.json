@@ -1,0 +1,1 @@
+{"cell":[35,-116],"years":[1950,2025],"efFrom":"2007-02-01","src":"SPC 1950-2025_all_tornadoes.csv (sg=1 whole tracks)","cols":["date","st","mag","fat","inj","len","wid","slat","slon","elat","elon","county","id"],"rows":[["1998-08-25","CA",0,0,0,1,30,35.42,-115.33,35.43,-115.32,"San Bernardino Co.","08-25/68"]]}

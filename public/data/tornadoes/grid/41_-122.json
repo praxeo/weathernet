@@ -1,0 +1,1 @@
+{"cell":[41,-122],"years":[1950,2025],"efFrom":"2007-02-01","src":"SPC 1950-2025_all_tornadoes.csv (sg=1 whole tracks)","cols":["date","st","mag","fat","inj","len","wid","slat","slon","elat","elon","county","id"],"rows":[["1958-05-22","CA",1,0,0,2.7,50,41.92,-121.47,41.93,-121.4,"Siskiyou Co.","05-22/35"]]}

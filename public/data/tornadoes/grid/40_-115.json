@@ -1,0 +1,1 @@
+{"cell":[40,-115],"years":[1950,2025],"efFrom":"2007-02-01","src":"SPC 1950-2025_all_tornadoes.csv (sg=1 whole tracks)","cols":["date","st","mag","fat","inj","len","wid","slat","slon","elat","elon","county","id"],"rows":[["1970-05-13","NV",1,0,0,5.7,440,40.8,-114.2,40.85,-114.1,"Elko Co.","05-13/80"],["1987-05-24","NV",0,0,0,0.2,20,40.77,-114.6,null,null,"Elko Co.","05-24/206"]]}

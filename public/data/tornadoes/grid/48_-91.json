@@ -1,0 +1,1 @@
+{"cell":[48,-91],"years":[1950,2025],"efFrom":"2007-02-01","src":"SPC 1950-2025_all_tornadoes.csv (sg=1 whole tracks)","cols":["date","st","mag","fat","inj","len","wid","slat","slon","elat","elon","county","id"],"rows":[["2021-10-10","MN",2,0,0,4,500,48.044,-90.296,48.0995,-90.2962,"Cook Co.","10-10/42"]]}

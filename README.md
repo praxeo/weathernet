@@ -18,7 +18,27 @@ WeatherNet grew out of [weatherchat](https://github.com/praxeo/weatherchat). It 
 - **Your weather.** Observations, an original AFD-style forecast discussion for your point, a 48-hour chart, the 7-day, and storm reports and stations around you.
 - **This day in weather.** Records and normals at the nearest long-record station, with a dot plot of every year's high and low. Also tornadoes on this date, nearby and nationally.
 - **Learn.** Explainers for every product and phenomenon the site shows, linked from the stories.
-- **Ask WeatherNet.** The weatherchat agent plus WeatherNet tools (national stories, cameras, satellite status, climate history, live coverage).
+- **Ask WeatherNet.** The weatherchat agent plus WeatherNet tools (national stories, cameras, satellite status, climate history, the historical archive, live coverage).
+
+## Historical data API
+
+Every endpoint returns JSON with open CORS, so scripts and other sites can call it directly. `GET /api/archive` describes the endpoints and their parameters. Coverage is the US, with the continental US the best covered.
+
+| Endpoint | What it returns |
+|---|---|
+| `/api/archive/products?office=BMX&type=AFD&date=2011-04-27[&days=1-7]` | Archived NWS text products from one office over 1–7 UTC days, newest first. `type` defaults to AFD (Area Forecast Discussion). Any AFOS id also works, such as HWO, PNS (damage surveys) or LSR. Use `office=SPC`/`WPC`/`NHC` for the national centers (SWODY1, SWOMCD, QPFERD, FFGMPD, TCDAT1 …). `lat`+`lon` can stand in for `office`. |
+| `/api/archive/product?id=…` or `?office=BMX&at=2011-04-27T15:00Z&count=3` | One product's full text, plus AFD sections, by id. Or the latest `count` issuances at or before a time: "what was the forecast discussion saying then". |
+| `/api/archive/day?lat&lon&date=2011-04-27[&radius=25]` | Everything recorded at a point on one local date: the climate station's high/low/precip/snow against normal, the nearest ASOS's hourly observations, the SPC/WPC outlooks in force, every warning and watch that covered the point (and whether it was inside the polygon), storm reports and tornado tracks within the radius, and that day's AFDs. |
+| `/api/archive/daily?lat&lon&start&end` (or `sid=BHMthr`) | Daily max/min, precipitation, snowfall and snow depth with 1991–2020 normals at the nearest long-record climate station, up to 10 years per call, with a summary. |
+| `/api/archive/tornadoes?lat&lon[&radius=25&since&until&min]` | Every SPC tornado track since 1950 that passed within the radius (up to 100 mi), with closest approach, counts by rating and decade, and the strongest, deadliest and closest. |
+| `/api/history?lat&lon&date` | Records and normals for a calendar date, every year's high and low on it, and tornadoes on that date. |
+
+Forecast discussions go back to about 1999–2001, depending on the office. Warnings, storm reports and outlooks are reliable from about 2005, daily climate records reach back to the 1800s, and tornado tracks to 1950. Sources:
+- Iowa Environmental Mesonet: the NWS text archive, VTEC warnings, LSRs, SPC/WPC outlooks, ASOS observations.
+- NOAA ACIS: daily climate data and normals.
+- The SPC severe weather database: tornado tracks.
+
+The chat agent uses the same data through `get_archived_discussion`, `get_weather_on_date`, `get_tornado_history` and `get_daily_climate`.
 
 ## Run it
 
@@ -57,6 +77,7 @@ Everything optional degrades to a "not configured" state. Location defaults and 
 ```sh
 npm run check                                        # wrangler bundle dry run
 NODE_USE_ENV_PROXY=1 node scripts/check-stories.mjs   # live national story board
+NODE_USE_ENV_PROXY=1 node scripts/check-archive.mjs   # historical API against known events
 NODE_USE_ENV_PROXY=1 node scripts/dev-server.mjs      # local harness for headless browser checks
 ```
 

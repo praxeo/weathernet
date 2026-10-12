@@ -28,6 +28,8 @@ style), but never at the cost of accuracy.
   - `satellite.js`: GOES catalog, loops, mesoscale sectors.
   - `cams.js`: camera registry.
   - `history.js`: ACIS records and SPC tornado history.
+  - `archive.js`: the historical API (archived NWS text, a point's day,
+    daily series, tornado tracks near a point).
   - `youtube.js`: live storm coverage.
 - **`src/lib/`**: `net.js` (fetch with deadlines, User-Agent, geo math),
   `cache.js` (`edgeJSON` Cache-API caching, `memo` per-isolate, `json`),
@@ -43,7 +45,8 @@ style), but never at the cost of accuracy.
     step, no framework**).
   - `vendor/` holds Leaflet 1.9.4 and hls.js 1.7.3 with their licenses.
   - `data/tornadoes/MM-DD.json` is the SPC tornado database split by day,
-    rebuilt by `scripts/build-tornadoes.mjs`.
+    and `data/tornadoes/grid/<lat>_<lon>.json` is the same tracks indexed by
+    1° cell. Both are rebuilt by `scripts/build-tornadoes.mjs`.
 
 `wrangler.toml` serves `public/` and runs the worker first only for `/api/*`.
 
@@ -54,10 +57,45 @@ style), but never at the cost of accuracy.
 - `/api/cams?lat&lon&radius&limit[&links]`: cameras nearest a point.
 - `/api/live?region=AL|national`: YouTube live/upcoming/recent.
 - `/api/history?lat&lon&date`: records, normals, series, tornadoes.
+- `/api/archive/*`: the historical API (`src/sources/archive.js`).
+  `GET /api/archive` describes it:
+  - `products`: list NWS text products for an office and dates.
+  - `product`: one product by id, or the latest at a time.
+  - `day`: a point's date.
+  - `daily`: a station's daily series.
+  - `tornadoes`: tracks near a point.
 - `/api/config`: the default location and which optional keys are set.
 - Everything else (`/api/chat`, `/api/summary`, `/api/dashboard`,
   `/api/tropical`, `/api/ground`, `/api/basemap`, `/api/geosearch`,
   `/api/health`, …) is the brain.
+
+## The historical archive (`src/sources/archive.js`)
+
+- **Text products** come from IEM's AFOS archive (`api/1/nws/afos/list`,
+  `api/1/nwstext`).
+  - Until ~2004 many offices filed AFDs under their city's id (AFDBHM,
+    AFDOKC), so a 3-letter type is a PIL *prefix* within the office's WMO id
+    (KBMX). That catches both.
+  - Offices outside the K prefix (PAFC, PHFO, TJSJ) and the national
+    centers (SPC→KWNS, WPC→KWBC but its FFGMPD→KWNH, NHC→KNHC) are mapped in
+    `CCCC`.
+- **A point's day** is the local calendar day in the point's NWS time zone
+  (from `api.weather.gov/points`, which also gives the office and state).
+  - The climate station is `history.js`'s pick (nearest ThreadEx), so the
+    numbers match the History section.
+  - Hourly obs come from the nearest ASOS in the state's IEM network, within
+    75 mi.
+  - Outlooks are those in force at 17Z, normally SPC's 1630Z Day 1.
+  - Warnings merge IEM's county/zone events with its storm-based polygons.
+    `inPolygon: false` means the county was warned but the polygon missed
+    the point.
+- **Tornado radius search** loads the 1° grid cells around the point and
+  measures each track's closest approach as a straight start→end line.
+- **Caching**:
+  - Settled dates (over 3 days old) are edge-cached 30 days.
+  - A day with a failed source is returned but never cached.
+  - Bad parameters throw with `status: 400`, which `safe()` in
+    `src/index.js` passes through.
 
 ## The story engine (`src/sources/stories.js`)
 
@@ -244,6 +282,7 @@ without notice**. `scripts/check-cams.mjs` checks them against live data.
    - `check-satellite.mjs`
    - `check-cams.mjs`
    - `check-history.mjs`
+   - `check-archive.mjs`
    - `check-youtube.mjs`
 
 ## Config, secrets, deploy
