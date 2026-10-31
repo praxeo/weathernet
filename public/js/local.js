@@ -1,5 +1,9 @@
-// "Your weather": observations, the AI forecast discussion (weatherchat's
-// /api/summary), a 48-hour chart, the 7-day and ground truth around the point.
+// "Your weather": the top of the page, in the order weatherchat's home
+// screen reads. Alerts for the point come first, full width. Then the
+// conditions beside the AI forecast discussion, then the next 48 hours and
+// the 7-day. "Around you" (stations, storm reports, broadcasters' flags)
+// moves up under the conditions while something is happening nearby, and
+// otherwise sits at the end.
 import { $, el, svg, clear, getJSON, store, ago, fmtTime } from "./util.js";
 import { state, setLocation } from "./state.js";
 import { renderMarkdown } from "./markdown.js";
@@ -11,29 +15,43 @@ export async function renderLocal() {
   if (!loc) return;
   const my = ++token;
   const board = clear($("localBoard"));
-  const left = el("div", { style: { display: "grid", gap: "16px" } }, el("div", { class: "panel skeleton", style: { height: "260px" } }));
-  const right = el("div", { style: { display: "grid", gap: "16px" } }, discussionCard(loc), el("div", { class: "panel skeleton", style: { height: "220px" } }));
-  board.append(el("div", { class: "local-grid" }, left, right));
+  const alerts = el("div", { class: "local-alerts" });
+  const colA = el("div", { class: "local-col" },
+    el("div", { class: "panel skeleton o-now", style: { height: "260px" } }),
+    el("div", { class: "panel skeleton o-chart", style: { height: "220px" } }));
+  const colB = el("div", { class: "local-col" }, discussionCard(loc));
+  board.append(alerts, el("div", { class: "local-grid" }, colA, colB));
 
   const [dash, ground] = await Promise.all([
     getJSON(`/api/dashboard?lat=${loc.lat}&lon=${loc.lon}`).catch(() => null),
     getJSON(`/api/ground?lat=${loc.lat}&lon=${loc.lon}`).catch(() => null),
   ]);
   if (my !== token) return;
-  clear(left);
-  right.lastChild.remove();
+  clear(colA);
   if (!dash) {
-    left.append(el("div", { class: "panel empty", text: "Couldn't load the forecast for this point (NWS may be slow). It will retry shortly." }));
+    colA.append(el("div", { class: "panel empty o-now", text: "Couldn't load the forecast for this point (NWS may be slow). It will retry shortly." }));
     return;
   }
   if (dash.location?.name && (!loc.name || !loc.office)) {
     setLocationQuiet({ ...loc, name: loc.name || dash.location.name, office: dash.location.office });
   }
   $("localDek").textContent = `${dash.location?.name || loc.name || "Your point"} · NWS ${dash.location?.office || ""} · observations from ${dash.current?.station || "the nearest station"}.`;
-  left.append(nowCard(dash));
-  if (dash.alerts?.length) left.append(alertsCard(dash.alerts));
-  if (ground) left.append(groundCard(ground));
-  right.append(chartCard(dash), dailyCard(dash));
+  if (dash.alerts?.length) alerts.append(alertsCard(dash.alerts));
+  const hot = !!ground && groundActive(ground);
+  colA.append(nowCard(dash));
+  if (hot) colA.append(groundCard(ground, true));
+  colA.append(chartCard(dash), dailyCard(dash));
+  if (ground && !hot) colB.append(groundCard(ground, false));
+}
+
+// weatherchat's rule: a person-made storm report in the last 6 h, or a
+// damage/tornado/flooding flag from local broadcasters in the last 3 h.
+function groundActive(g) {
+  const now = Date.now();
+  const recent = (t, h) => t && now - Date.parse(t) < h * 3600e3;
+  if ((g.reports?.items || []).some((r) => !r.automated && recent(r.time, 6))) return true;
+  const sig = g.signals?.items || g.signals?.signals || [];
+  return sig.some((x) => ["damage", "tornado", "flooding"].includes(x.kind) && recent(x.time, 3));
 }
 
 // Update the stored name/office without re-triggering every section.
@@ -47,7 +65,7 @@ function setLocationQuiet(loc) {
 function nowCard(d) {
   const c = d.current || {};
   const wind = c.windSpeed_mph == null ? "—" : c.windSpeed_mph === 0 && !c.windGust_mph ? "Calm" : `${compass(c.windDir_deg)} ${c.windSpeed_mph}${c.windGust_mph ? ` G${c.windGust_mph}` : ""} mph`.trim();
-  return el("div", { class: "panel now-card" },
+  return el("div", { class: "panel now-card o-now" },
     el("div", { class: "now-top" },
       el("div", { class: "now-temp" }, c.temperature_F != null ? Math.round(c.temperature_F) : "—", el("sup", { text: "°F" })),
       el("div", {},
@@ -72,7 +90,7 @@ function obs(label, value) {
 }
 
 function alertsCard(alerts) {
-  return el("div", { class: "panel", style: { padding: "14px", display: "grid", gap: "8px" } },
+  return el("div", { class: "panel alerts-card", style: { padding: "14px", display: "grid", gap: "8px" } },
     el("div", { class: "kicker", text: "Alerts for your point" }),
     alerts.slice(0, 6).map((a) => el("div", { class: "alert-row" },
       el("b", { text: a.event }), " ", el("span", { class: "muted", text: a.ends || a.expires ? `until ${fmtTime(a.ends || a.expires)}` : "" }),
@@ -81,12 +99,12 @@ function alertsCard(alerts) {
   );
 }
 
-function groundCard(g) {
+function groundCard(g, hot) {
   const items = g.reports?.items || [];
   const sum = g.stations?.summary;
   const sig = g.signals?.items || g.signals?.signals || [];
-  return el("div", { class: "panel", style: { padding: "14px", display: "grid", gap: "10px" } },
-    el("div", { class: "kicker", text: "Around you" }),
+  return el("div", { class: `panel ${hot ? "o-ground-hot" : "o-ground"}`, style: { padding: "14px", display: "grid", gap: "10px" } },
+    el("div", { class: "kicker", text: hot ? "Around you · happening now" : "Around you" }),
     sum ? el("div", { class: "ground-list" },
       sum.highest_peak_gust_today ? el("div", { class: "r", text: `Peak gust today: ${sum.highest_peak_gust_today}` }) : null,
       sum.wettest_today ? el("div", { class: "r", text: `Wettest gauge today: ${sum.wettest_today}` }) : null,
@@ -101,15 +119,33 @@ function groundCard(g) {
 }
 
 // ── Discussion ──────────────────────────────────────────────────────────────
+// Collapsible like weatherchat's: the headline and the first section stay,
+// the rest folds away. The choice is remembered; phones start folded so the
+// 48-hour chart and the 7-day aren't a long scroll away.
 function discussionCard(loc) {
   const key = `wn.disc:${loc.lat.toFixed(2)},${loc.lon.toFixed(2)}`;
   const cached = store.get(key, null);
   const md = el("div", { class: "md" });
   const meta = el("div", { class: "muted", style: { fontSize: "12px", marginTop: "6px" } });
-  const card = el("div", { class: "panel discussion" + (cached ? " stale" : "") },
-    el("div", { class: "kicker", style: { marginBottom: "10px" }, text: "Forecast discussion" }), md, meta);
+  const toggle = el("button", { class: "disc-toggle", type: "button", hidden: true });
+  const card = el("div", { class: "panel discussion o-disc" + (cached ? " stale" : "") },
+    el("div", { class: "kicker", style: { marginBottom: "10px" }, text: "Forecast discussion" }), md, toggle, meta);
+  const folded = () => store.get("wn.discFolded", window.matchMedia("(max-width: 640px)").matches);
+  const paint = (text) => {
+    md.innerHTML = renderMarkdown(text);
+    const long = md.querySelectorAll(":scope > p").length > 2;
+    toggle.hidden = !long;
+    card.classList.toggle("folded", long && folded());
+    toggle.textContent = card.classList.contains("folded") ? "Full discussion ▾" : "Collapse ▴";
+  };
+  toggle.addEventListener("click", () => {
+    const now = !card.classList.contains("folded");
+    store.set("wn.discFolded", now);
+    card.classList.toggle("folded", now);
+    toggle.textContent = now ? "Full discussion ▾" : "Collapse ▴";
+  });
   if (cached) {
-    md.innerHTML = renderMarkdown(cached.summary);
+    paint(cached.summary);
     meta.textContent = `Previous discussion (${ago(cached.at)}). Writing a fresh one…`;
   } else {
     md.append(el("div", { class: "skeleton", style: { height: "140px" } }));
@@ -118,7 +154,7 @@ function discussionCard(loc) {
   getJSON(`/api/summary?lat=${loc.lat}&lon=${loc.lon}`, { timeout: 110000 }).then((d) => {
     if (!d?.summary || !card.isConnected) return;
     card.classList.remove("stale");
-    md.innerHTML = renderMarkdown(d.summary);
+    paint(d.summary);
     meta.textContent = `${d.source === "model" ? "Written by WeatherNet's meteorologist model from live NWS/SPC/WPC/NHC data" : "Automatic summary (the model is unavailable)"} · ${ago(d.generatedAt)}`;
     if (d.source === "model") store.set(key, { summary: d.summary, at: d.generatedAt });
   }).catch(() => {
@@ -130,7 +166,7 @@ function discussionCard(loc) {
 // ── 48-hour chart: temperature, dewpoint, precip chance ─────────────────────
 function chartCard(d) {
   const s = d.hourlySeries;
-  const card = el("div", { class: "panel chart-card" }, el("div", { class: "kicker", style: { marginBottom: "8px" }, text: "Next 48 hours" }));
+  const card = el("div", { class: "panel chart-card o-chart" }, el("div", { class: "kicker", style: { marginBottom: "8px" }, text: "Next 48 hours" }));
   if (!s?.temp_F?.length) return card;
   const n = Math.min(48, s.temp_F.length);
   const W = 720, H = 230, L = 34, R = 10, T = 12, B = 30;
@@ -183,7 +219,7 @@ function dailyCard(d) {
     if (!day) break;
     rows.push({ name: day.name, hi: day.temp_F, lo: night?.temp_F ?? null, short: day.short, pop: Math.max(day.pop || 0, night?.pop || 0) });
   }
-  return el("div", { class: "panel", style: { padding: "14px 16px" } },
+  return el("div", { class: "panel o-daily", style: { padding: "14px 16px" } },
     el("div", { class: "kicker", style: { marginBottom: "6px" }, text: "7-day · NWS point forecast" }),
     el("table", { class: "daily-table" }, el("tbody", {}, rows.slice(0, 8).map((r) => el("tr", {},
       el("td", { class: "d", text: r.name }),

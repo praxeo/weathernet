@@ -134,7 +134,7 @@ main { display: block; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
 /* ── Hero ────────────────────────────────────────────────────────────────── */
-.hero { max-width: var(--max); margin: 0 auto; padding: 22px var(--gutter) 0; display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(320px, 1fr); gap: 22px; align-items: start; }
+.hero { max-width: var(--max); margin: 0 auto; padding: 56px var(--gutter) 0; display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(320px, 1fr); gap: 22px; align-items: start; }
 .hero-media { position: relative; border-radius: var(--radius); overflow: hidden; background: #000; border: 1px solid var(--border); box-shadow: var(--shadow); }
 .sat-stage { position: relative; width: 100%; aspect-ratio: 5 / 3; background: #02040a; }
 .sat-stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; }
@@ -156,7 +156,7 @@ main { display: block; }
 .hero-copy { display: flex; flex-direction: column; gap: 14px; }
 .hero-copy .status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .hero-copy .lead-kicker { font: 800 12px/1.2 var(--font); letter-spacing: .14em; text-transform: uppercase; }
-.hero-copy h1 { margin: 0; font-size: clamp(28px, 3.3vw, 46px); line-height: 1.05; letter-spacing: -.025em; }
+.hero-copy .lead-title { margin: 0; font-size: clamp(28px, 3.3vw, 46px); line-height: 1.05; letter-spacing: -.025em; }
 .hero-copy .lede { margin: 0; color: var(--text-2); font-size: 15.5px; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
 .hero-copy .facts { display: flex; gap: 8px; flex-wrap: wrap; }
 .statline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -267,7 +267,13 @@ main { display: block; }
 .channel-chips { display: flex; gap: 6px; flex-wrap: wrap; }
 
 /* ── Your weather ────────────────────────────────────────────────────────── */
-.local-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr); gap: 16px; align-items: start; }
+.local-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.local-col { display: grid; gap: 16px; }
+.local-alerts:empty { display: none; }
+.local-alerts { margin-bottom: 16px; }
+/* One reading order for the stacked (phone/tablet) layout, where the two
+   columns dissolve into a single list. */
+.o-now { order: 1; } .o-ground-hot { order: 2; } .o-disc { order: 3; } .o-chart { order: 4; } .o-daily { order: 5; } .o-ground { order: 6; }
 .now-card { padding: 18px; display: grid; gap: 14px; }
 .now-top { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
 .now-temp { font: 800 64px/0.9 var(--font); letter-spacing: -.04em; }
@@ -281,6 +287,10 @@ main { display: block; }
 .alert-row b { color: #ffd3b0; }
 .discussion { padding: 18px 20px; }
 .discussion.stale { opacity: .55; }
+.discussion.folded .md > p:nth-of-type(n+3) { display: none; }
+.disc-toggle { display: block; margin: 2px 0 0; padding: 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer; }
+.disc-toggle:hover { color: var(--text); }
+.disc-toggle[hidden] { display: none; }
 .discussion .md h1, .discussion .md h2, .discussion .md h3 { font-size: 15px; margin: 14px 0 6px; letter-spacing: .02em; }
 .discussion .md p { margin: 0 0 10px; color: var(--text-2); }
 .discussion .md strong { color: var(--text); }
@@ -399,6 +409,7 @@ footer b { color: var(--text-2); }
 @media (max-width: 1100px) {
   .hero { grid-template-columns: 1fr; }
   .local-grid, .history-grid { grid-template-columns: 1fr; }
+  .local-col { display: contents; }
 }
 @media (max-width: 900px) {
   .sat-gallery { grid-template-columns: 1fr; }
@@ -411,7 +422,7 @@ footer b { color: var(--text-2); }
   body { font-size: 14.5px; }
   .topbar { gap: 10px; }
   .brand small, .clock { display: none; }
-  .section { padding-top: 40px; }
+  .section, .hero { padding-top: 40px; }
   .statline { grid-template-columns: repeat(2, 1fr); }
   .record-row { grid-template-columns: repeat(2, 1fr); }
   .obs-grid { grid-template-columns: repeat(2, 1fr); }
@@ -470,4 +481,27 @@ footer b { color: var(--text-2); }
   /* Clamped text overflows into padding, so the bottom gap is a border. */
   .sat-caption { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; padding-bottom: 0; border-bottom: 14px solid rgba(4, 6, 11, .9); }
   .meso-row { grid-auto-flow: column; grid-auto-columns: 44%; grid-template-columns: none; overflow-x: auto; scrollbar-width: none; }
+}
+
+/* Your weather opens the page. */
+.section.lead-section { padding-top: 26px; }
+.hero > .section-head { grid-column: 1 / -1; margin-bottom: -4px; }
+a.pill-level { color: var(--text); text-decoration: none; }
+a.pill-level:hover { border-color: var(--accent); }
+
+/* National strip above your weather on major/extreme days. */
+.us-strip { max-width: var(--max); margin: 14px auto 0; padding: 0 var(--gutter); display: flex; gap: 10px; align-items: stretch; }
+.us-strip[hidden] { display: none; }
+.us-strip-lead { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; cursor: pointer; text-align: left;
+  border: 1px solid color-mix(in srgb, var(--tier) 55%, transparent); background: color-mix(in srgb, var(--tier) 12%, var(--panel)); color: var(--text); }
+.us-strip-lead:hover { background: color-mix(in srgb, var(--tier) 20%, var(--panel)); }
+.us-strip-lead .d { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.us-strip-lead .k { font: 800 11px/1.2 var(--font); letter-spacing: .12em; text-transform: uppercase; color: var(--tier); white-space: nowrap; }
+.us-strip-lead .t { font-weight: 650; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.us-strip-lead .go { margin-left: auto; color: var(--text-2); font-size: 13px; white-space: nowrap; }
+.us-strip-all { align-self: center; font-size: 13px; white-space: nowrap; }
+@media (max-width: 640px) {
+  .us-strip-all, .us-strip-lead .go { display: none; }
+  .us-strip-lead { flex-wrap: wrap; row-gap: 4px; }
+  .us-strip-lead .t { flex-basis: 100%; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 }

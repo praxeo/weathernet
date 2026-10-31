@@ -167,6 +167,23 @@ without notice**. `scripts/check-cams.mjs` checks them against live data.
 
 ## Front end (`public/js`)
 
+- **Page order follows how weatherchat is used**: your own weather first,
+  then the country, then the tools. The order is Your weather → Across the
+  US (GOES hero + lead story) → story board → map → cams → satellite →
+  history → learn.
+  - **Inside "Your weather"**: alerts for the point (full width), then the
+    conditions beside the discussion, then the 48 h chart and 7-day.
+    - "Around you" sits under the conditions while weatherchat's
+      `groundActive` rule holds, and at the end otherwise.
+    - On phones the two columns dissolve (`display: contents`) and the
+      `.o-*` order classes set one reading order.
+    - The discussion folds to its headline and first section like
+      weatherchat's (`wn.discFolded`; phones start folded).
+  - **`#usStrip`**: on a major or extreme national day, a one-line strip
+    above your weather names the lead US story.
+  - **Cams**: live streams lead while anyone is on air, then near you, then
+    the story cameras.
+  - Local renders at boot, without waiting for the national data.
 - **`app.js`** boots the page. It fetches `/api/stories` (every 2 min) and
   `/api/satellite` (every 5 min) and lazy-starts the map, satellite gallery,
   cams and history when they scroll into view. **`state.js`** holds shared
