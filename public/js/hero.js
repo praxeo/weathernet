@@ -173,6 +173,26 @@ function pinLabel(s) {
   return t.length > 26 ? t.slice(0, 25) + "…" : t;
 }
 
+// ── Top-of-page strip ──────────────────────────────────────────────────────
+// The page opens on your own weather. On a major or extreme national day, a
+// one-line strip above it names the lead story so it isn't missed.
+export function renderUsStrip(data) {
+  const strip = clear($("usStrip"));
+  const lead = (data?.stories || []).find((s) => s.lane === "us");
+  const big = data?.level === "extreme" || data?.level === "major";
+  strip.hidden = !(lead && big && lead.tier >= 2);
+  if (strip.hidden) return;
+  strip.append(
+    el("button", { class: `us-strip-lead ${tierClass(lead.tier)}`, on: { click: () => openStory(lead.id) } },
+      el("span", { class: "d tbg" }),
+      el("span", { class: "k", text: lead.kicker || "Across the US" }),
+      el("span", { class: "t", text: lead.title }),
+      el("span", { class: "go", text: "Follow →" }),
+    ),
+    el("a", { class: "us-strip-all", href: "#now", text: "All US stories ↓" }),
+  );
+}
+
 // ── Lead story column ───────────────────────────────────────────────────────
 export function renderHeroCopy(data) {
   const box = clear($("heroCopy"));
@@ -186,19 +206,18 @@ export function renderHeroCopy(data) {
   $("levelText").textContent = { extreme: "Extreme", major: "Major", active: "Active", quiet: "Quiet" }[level] || level;
 
   box.append(el("div", { class: "status" },
-    el("span", { class: "kicker", text: "Across the US right now" }),
     el("span", { class: `pill-level lvl-${level}` }, el("span", { class: "dot" }), `National: ${level}`),
   ));
 
   if (!lead) {
     put(box,
-      el("h1", { text: "A quiet day across the US" }),
-      el("p", { class: "lede", text: "No extreme or major hazards are in effect. The map, satellite and your local forecast are below." }),
+      el("h3", { class: "lead-title", text: "A quiet day across the US" }),
+      el("p", { class: "lede", text: "No extreme or major hazards are in effect. The story board, map and satellite are below." }),
     );
   } else {
     put(box,
       el("div", { class: `lead-kicker ${tierClass(lead.tier)}`, style: { color: "var(--tier)" }, text: lead.kicker || "" }),
-      el("h1", { text: lead.title }),
+      el("h3", { class: "lead-title", text: lead.title }),
       lead.place ? el("div", { class: "muted", text: `${lead.place}${lead.time ? " · updated " + ago(lead.time) : ""}` }) : null,
       lead.facts?.length ? el("div", { class: "facts" }, lead.facts.map((f) => el("span", { class: "badge", text: f }))) : null,
       el("p", { class: "lede", text: lead.summary || "" }),

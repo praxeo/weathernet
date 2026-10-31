@@ -138,22 +138,29 @@ export async function renderCams() {
     .then(([a, b]) => (a || b ? mergeLive(a, b) : null));
   const [groups, near, yt] = await Promise.all([Promise.all(jobs), mine, live]);
 
+  // Live streams lead while anyone is on air; then your own cameras, then the
+  // cameras at the national stories; links and recent uploads close it out.
   clear(board);
+  const onAir = !!yt?.live?.length;
+  if (onAir) board.append(liveCoverage(yt));
+  let tiles = 0;
+  if (near?.cams?.length) {
+    tiles += near.cams.length;
+    board.append(el("div", { class: "cam-group" },
+      el("h3", {}, "Near you", el("span", { class: "muted", text: `· ${loc.name || "your point"}` })),
+      el("div", { class: "cam-grid" }, near.cams.map((c) => camTile(c, () => openCam(c)))),
+    ));
+  }
   for (const g of groups.filter(Boolean)) {
     if (!g.d.cams?.length) continue;
+    tiles += g.d.cams.length;
     board.append(el("div", { class: "cam-group" },
       el("h3", {}, el("span", { class: "badge " + ["context", "notable", "major", "extreme"][g.s.tier], text: g.s.kicker }), g.s.title,
         el("span", { class: "muted", text: `· ${plural(g.d.cams.length, "camera")} within 80 mi` })),
       el("div", { class: "cam-grid" }, g.d.cams.map((c) => camTile(c, () => openCam(c)))),
     ));
   }
-  if (near?.cams?.length) {
-    board.append(el("div", { class: "cam-group" },
-      el("h3", {}, "Near you", el("span", { class: "muted", text: `· ${loc.name || "your point"}` })),
-      el("div", { class: "cam-grid" }, near.cams.map((c) => camTile(c, () => openCam(c)))),
-    ));
-  }
-  if (!board.childNodes.length) {
+  if (!tiles) {
     board.append(el("div", { class: "panel empty", text: "No public cameras near the current stories or your location yet." }));
   }
   if (near?.links?.length) {
@@ -162,7 +169,7 @@ export async function renderCams() {
       el("div", { class: "channel-chips" }, near.links.map((l) => el("a", { class: "chip", href: l.url, target: "_blank", rel: "noopener", text: `${l.station}${l.name ? " · " + l.name : ""} ↗` }))),
     ));
   }
-  if (yt) board.append(liveCoverage(yt));
+  if (yt && !onAir) board.append(liveCoverage(yt));
 
   clearInterval(refreshTimer);
   refreshTimer = setInterval(refreshStills, 60000);

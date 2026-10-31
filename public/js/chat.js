@@ -9,12 +9,14 @@ import { camTile, openCam } from "./cams.js";
 const KEY = "wn.chat.v1";
 const MAX_MSGS = 40;
 const CHAT_STALL_MS = 75000;
+// Your own weather first, as in weatherchat, then the national questions.
 const SUGGEST = [
+  "What's my forecast for tonight?",
+  "Any severe weather risk here in the next 3 days?",
+  "How does today compare with the records here?",
   "What's the biggest weather story right now?",
   "Show me cameras near the top story",
   "What are the GOES mesoscale sectors watching?",
-  "How does today compare with the records here?",
-  "What's my forecast for tonight?",
 ];
 const TOOL_WORDS = { spc: "SPC", afd: "AFD", wpc: "WPC", qpf: "QPF", cpc: "CPC", nhc: "NHC", metar: "METAR", taf: "TAF", day48: "day 4-8", cams: "cameras" };
 

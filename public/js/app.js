@@ -1,9 +1,12 @@
-// WeatherNet front end bootstrap: fetch the national board and the satellite
-// catalog, wire sections to state, poll, and lazy-start the heavy sections
-// (map, satellite gallery, cams, history) as they scroll into view.
+// WeatherNet front end bootstrap. The page reads top-down the way weatherchat
+// is used: your own weather first (rendered at once, not after the national
+// data), then the US stories, then the tools (map, cams, satellite, history,
+// learn). It fetches the national board and the satellite catalog, wires
+// sections to state, polls, and lazy-starts the heavy sections (map,
+// satellite gallery, cams, history) as they scroll into view.
 import { $, getJSON, utcStamp, onVisible, closeSheet } from "./util.js";
 import { state, on, emit } from "./state.js";
-import { renderHero, renderHeroCopy, renderPins } from "./hero.js";
+import { renderHero, renderHeroCopy, renderPins, renderUsStrip } from "./hero.js";
 import { renderStories } from "./stories.js";
 import { initMap, updateMap, onLocationForMap } from "./map.js";
 import { renderSatellite } from "./satellite.js";
@@ -47,6 +50,7 @@ async function loadSatellite() {
 
 function wire() {
   on("stories", (d) => {
+    renderUsStrip(d);
     renderHeroCopy(d);
     renderPins();
     renderStories(d);
@@ -91,17 +95,22 @@ function lazySections() {
   });
 }
 
+// A nav link lights up for its own section and any listed in data-also
+// ("Across the US" covers the hero and the story board).
 function navHighlight() {
   const links = [...document.querySelectorAll(".nav a")];
+  const ids = (a) => [a.getAttribute("href").slice(1), ...(a.dataset.also || "").split(" ").filter(Boolean)];
   const io = new IntersectionObserver((entries) => {
     for (const e of entries) {
       if (!e.isIntersecting) continue;
-      for (const a of links) a.classList.toggle("on", a.getAttribute("href") === `#${e.target.id}`);
+      for (const a of links) a.classList.toggle("on", ids(a).includes(e.target.id));
     }
   }, { rootMargin: "-45% 0px -50% 0px" });
   for (const a of links) {
-    const s = document.querySelector(a.getAttribute("href"));
-    if (s) io.observe(s);
+    for (const id of ids(a)) {
+      const s = document.getElementById(id);
+      if (s) io.observe(s);
+    }
   }
 }
 
@@ -123,6 +132,12 @@ async function boot() {
   initAsk();
   navHighlight();
 
+  // A saved location doesn't need the config round trip first.
+  const hadLoc = !!state.loc;
+  if (hadLoc) {
+    $("locName").textContent = state.loc.name || "Your location";
+    renderLocal();
+  }
   state.config = await getJSON("/api/config").catch(() => null);
   if (!state.loc) {
     const d = state.config?.defaultLocation || { lat: 33.21, lon: -86.65, name: "Shelby County, Alabama", office: "BMX" };
@@ -130,9 +145,9 @@ async function boot() {
   }
   $("locName").textContent = state.loc.name || "Your location";
 
+  if (!hadLoc) renderLocal();
   lazySections();
   await Promise.all([loadStories(), loadSatellite()]);
-  renderLocal();
   setInterval(loadStories, STORIES_MS);
   setInterval(loadSatellite, SATELLITE_MS);
 }

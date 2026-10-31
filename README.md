@@ -6,16 +6,16 @@ WeatherNet grew out of [weatherchat](https://github.com/praxeo/weatherchat). It 
 
 ## What's on the page
 
-- **Now.** A GOES-East CONUS loop with every live story pinned on it, beside the lead story and national counts.
+- **Your weather.** The page opens here, laid out like weatherchat's home screen: alerts for your point, then observations, an original AFD-style forecast discussion for your point, a 48-hour chart, the 7-day, and storm reports and stations around you (moved up under the conditions while something is happening nearby). On a major or extreme national day, a one-line strip above it names the lead US story.
+- **Across the US.** A GOES-East CONUS loop with every live story pinned on it, beside the lead story and national counts.
 - **Story board.** What's significant across the US right now, ranked:
   - **Tier 3 (extreme):** Tornado and Flash Flood Emergencies, Extreme Wind Warnings, PDS watches, SPC High Risk, major hurricanes at the coast.
   - **Tier 2 (major):** PDS tornado warnings, confirmed tornadoes, destructive storms, Moderate Risk, blizzards.
   - **Tier 1 (notable).**
   - Related warnings, watches and storm reports group into one story. Events outside the US appear only on a GDACS red alert.
 - **Live map.** NEXRAD composite with a 50-minute loop and an optional GOES IR layer. Also NWS warning polygons, SPC watches and Day 1 risk areas, storm reports, heat/fire/winter hazards, NHC cones/tracks/coastal warnings, and cameras.
+- **Cams.** Live storm coverage on YouTube leads while anyone is on air. Then DOT and sky cameras nearest you and nearest each top story. Some are live video, the rest are refreshing stills.
 - **Satellite.** GOES-East/West CONUS, regional sectors, the 1-minute mesoscale sectors (with where NOAA has aimed them) and full disk. Each comes with several bands and an explanation of what that band shows.
-- **Cams.** DOT and sky cameras nearest each top story and nearest you. Some are live video, the rest are refreshing stills. Plus live storm coverage on YouTube.
-- **Your weather.** Observations, an original AFD-style forecast discussion for your point, a 48-hour chart, the 7-day, and storm reports and stations around you.
 - **This day in weather.** Records and normals at the nearest long-record station, with a dot plot of every year's high and low. Also tornadoes on this date, nearby and nationally.
 - **Learn.** Explainers for every product and phenomenon the site shows, linked from the stories.
 - **Ask WeatherNet.** The weatherchat agent plus WeatherNet tools (national stories, cameras, satellite status, climate history, live coverage).

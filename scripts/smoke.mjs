@@ -25,7 +25,7 @@ for (const [name, viewport] of [["desktop", { width: 1440, height: 900 }], ["mob
   await page.waitForTimeout(8000);
   await page.screenshot({ path: `${out}/${name}-top.png` });
   // Visit every section so the lazy ones (map, satellite, cams, history) load.
-  for (const id of ["stories", "map", "satellite", "cams", "local", "history", "learn"]) {
+  for (const id of ["local", "now", "stories", "map", "cams", "satellite", "history", "learn"]) {
     await page.evaluate((i) => document.getElementById(i)?.scrollIntoView(), id);
     await page.waitForTimeout(2000);
   }
